@@ -17,7 +17,9 @@ def _build_engine():
       top — use NullPool so every request checks out a fresh PgBouncer slot.
     - The **direct** endpoint (ep-xxx.neon.tech) is used only for Alembic
       migrations (see alembic/env.py).
-    - Both endpoints require sslmode=require.
+    - Both endpoints require SSL — append ?sslmode=require to the URL when
+      not already present.  psycopg 3 does not accept sslmode via connect_args;
+      it must be embedded in the connection string.
 
     Local PostgreSQL:
     - No SSL or pool constraints needed; a standard pool with pool_pre_ping
@@ -29,12 +31,12 @@ def _build_engine():
     is_neon: bool = "neon.tech" in db_url
     is_neon_pooled: bool = "-pooler.neon.tech" in db_url
 
-    # Build connect_args only for Neon (avoid injecting sslmode into local PG)
-    connect_args: dict = {}
-    if is_neon:
-        # sslmode=require if not already present in the connection string
-        if "sslmode=" not in db_url:
-            connect_args["sslmode"] = "require"
+    # psycopg 3: sslmode must be in the connection string, not in connect_args.
+    # Append ?sslmode=require (or &sslmode=require) when connecting to Neon and
+    # it is not already present in the URL.
+    if is_neon and "sslmode=" not in db_url:
+        separator = "&" if "?" in db_url else "?"
+        db_url = f"{db_url}{separator}sslmode=require"
 
     if is_neon_pooled:
         # NullPool: disable SQLAlchemy's own pool when PgBouncer is handling
@@ -42,14 +44,12 @@ def _build_engine():
         return create_engine(
             db_url,
             poolclass=NullPool,
-            connect_args=connect_args,
         )
 
     # Standard local or direct-Neon engine with pool_pre_ping
     return create_engine(
         db_url,
         pool_pre_ping=True,
-        connect_args=connect_args,
     )
 
 

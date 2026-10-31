@@ -23,8 +23,9 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
-    # Local PostgreSQL default — always overridden by DATABASE_URL env var in production
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/voicebill_db"
+    # Local PostgreSQL default — always overridden by DATABASE_URL env var in production.
+    # Uses the psycopg 3 dialect (postgresql+psycopg); psycopg2 is no longer used.
+    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/voicebill_db"
 
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
