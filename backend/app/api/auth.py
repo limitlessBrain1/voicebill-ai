@@ -21,6 +21,21 @@ router = APIRouter(
 )
 
 
+def _user_response(user: User, db: Session) -> dict:
+    """Build a UserResponse-compatible dict with shop_name populated."""
+    shop = db.query(Shop).filter(Shop.id == user.shop_id).first()
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "phone": user.phone,
+        "shop_id": user.shop_id,
+        "shop_name": shop.name if shop else "",
+        "role": user.role,
+        "is_active": user.is_active,
+    }
+
+
 # ---------------------------------------------------------
 # REGISTER
 # ---------------------------------------------------------
@@ -34,17 +49,6 @@ def register_user(
     user_data: RegisterRequest,
     db: Session = Depends(get_db),
 ):
-    # Check whether the shop exists
-    shop = db.query(Shop).filter(
-        Shop.id == user_data.shop_id
-    ).first()
-
-    if not shop:
-        raise HTTPException(
-            status_code=404,
-            detail="Shop not found",
-        )
-
     # Check whether email already exists
     existing_email = db.query(User).filter(
         User.email == user_data.email
@@ -67,22 +71,32 @@ def register_user(
             detail="Phone number already registered",
         )
 
-    # Create user
+    # Create the shop automatically using the user's name and shop name
+    shop = Shop(
+        name=user_data.shop_name,
+        owner_name=user_data.name,
+        phone=user_data.phone,
+    )
+    db.add(shop)
+    db.flush()  # get shop.id without committing yet
+
+    # Create user linked to the new shop
     user = User(
         name=user_data.name,
         email=user_data.email,
         phone=user_data.phone,
         password_hash=hash_password(user_data.password),
-        shop_id=user_data.shop_id,
+        shop_id=shop.id,
         role="owner",
         is_active=True,
     )
 
     db.add(user)
     db.commit()
+    db.refresh(shop)
     db.refresh(user)
 
-    return user
+    return _user_response(user, db)
 
 
 # ---------------------------------------------------------
@@ -137,11 +151,11 @@ def login_user(
         }
     )
 
-    # Return token + user information
+    # Return token + user information (with shop_name)
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": user,
+        "user": _user_response(user, db),
     }
 
 
@@ -155,5 +169,6 @@ def login_user(
 )
 def get_my_profile(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    return current_user
+    return _user_response(current_user, db)

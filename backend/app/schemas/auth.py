@@ -2,11 +2,11 @@ from pydantic import BaseModel, EmailStr
 
 
 class RegisterRequest(BaseModel):
-    name: str
+    name: str           # Owner / user full name
     email: EmailStr
     phone: str
     password: str
-    shop_id: int
+    shop_name: str      # Name of the store — backend creates it automatically
 
 
 class UserResponse(BaseModel):
@@ -15,8 +15,10 @@ class UserResponse(BaseModel):
     email: EmailStr
     phone: str
     shop_id: int
+    shop_name: str = ""
     role: str
     is_active: bool
+
 
 class LoginRequest(BaseModel):
     email: EmailStr

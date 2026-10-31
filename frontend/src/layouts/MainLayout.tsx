@@ -28,21 +28,26 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   // Authenticated Layout: Fixed Sidebar on desktop + Header + Main Area + Footer
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen flex bg-[#F5F8FC] text-[#102A56] overflow-x-hidden font-sans">
-        {/* Desktop Sidebar & Mobile Drawer */}
+      <div className="h-screen flex bg-[#F5F8FC] text-[#102A56] overflow-hidden font-sans">
+        {/* Desktop Sidebar (w-64) & Mobile Drawer */}
         <Sidebar
           isMobileOpen={isMobileOpen}
           onMobileClose={() => setIsMobileOpen(false)}
         />
 
-        {/* Content Column */}
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+        {/* Content Column: flex-1, fills height, no outer scroll */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Sticky top header — h-16 matches sidebar brand row */}
           <Header onToggleMobile={() => setIsMobileOpen(!isMobileOpen)} />
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-            {children}
+          {/* Page content: scrollable area fills remaining height */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto w-full">
+              {children}
+            </div>
           </main>
 
+          {/* Footer pinned below scroll area, always visible at bottom */}
           <Footer />
         </div>
       </div>

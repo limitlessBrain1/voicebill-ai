@@ -43,6 +43,7 @@ export interface UserResponse {
   email: string;
   phone: string;
   shop_id: number;
+  shop_name: string;
   role: string;
   is_active: boolean;
   created_at: string;
@@ -138,12 +139,11 @@ export interface RegisterData {
   email: string;
   phone: string;
   password: string;
-  shop_id?: number;
-  role?: string;
+  shop_name: string;  // Store name — backend creates the shop automatically
 }
 
 /**
- * Registers a new user via POST /api/auth/register
+ * Registers a new user + store via POST /api/auth/register
  */
 export const registerUser = async (data: RegisterData): Promise<UserResponse> => {
   const response = await apiClient.post<UserResponse>('/api/auth/register', {
@@ -151,8 +151,7 @@ export const registerUser = async (data: RegisterData): Promise<UserResponse> =>
     email: data.email,
     phone: data.phone,
     password: data.password,
-    shop_id: data.shop_id || 1,
-    role: data.role || 'staff',
+    shop_name: data.shop_name,
   });
   return response.data;
 };
@@ -170,6 +169,34 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
  */
 export const getCategories = async (): Promise<CategoryResponse[]> => {
   const response = await apiClient.get<CategoryResponse[]>('/api/categories');
+  return response.data;
+};
+
+/**
+ * Creates a new category scoped to authenticated user's shop via POST /api/categories
+ */
+export const createCategory = async (name: string): Promise<CategoryResponse> => {
+  const response = await apiClient.post<CategoryResponse>('/api/categories', { name });
+  return response.data;
+};
+
+export interface ProductCreateData {
+  name: string;
+  category_id?: number | null;
+  purchase_price: string | number;
+  selling_price: string | number;
+  pack_size?: string | number;
+  unit: string;
+  stock_quantity?: string | number;
+  low_stock_threshold?: string | number;
+  barcode?: string | null;
+}
+
+/**
+ * Creates a new product scoped to authenticated user's shop via POST /api/products
+ */
+export const createProduct = async (data: ProductCreateData): Promise<ProductResponse> => {
+  const response = await apiClient.post<ProductResponse>('/api/products', data);
   return response.data;
 };
 

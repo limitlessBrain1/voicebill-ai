@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -8,12 +8,8 @@ import {
   Mic,
   Printer,
   LogOut,
-  User as UserIcon,
-  PlusCircle,
-  Menu,
   X,
-  Store,
-  ChevronRight,
+  Globe,
 } from 'lucide-react';
 import { useApp, ReceiptPaperWidth } from '../context';
 import logoImg from '../assets/logo.png';
@@ -24,7 +20,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobileClose }) => {
-  const { user, storeName, logout, paperWidth, setPaperWidth } = useApp();
+  const { user, logout, paperWidth, setPaperWidth, language, setLanguage, t } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -38,62 +34,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
   };
 
   const navItems = [
-    {
-      to: '/',
-      label: 'Overview',
-      icon: LayoutDashboard,
-      badge: null,
-    },
-    {
-      to: '/billing',
-      label: 'Billing Counter',
-      icon: ShoppingCart,
-      badge: 'Fast POS',
-      isPrimaryAction: true,
-    },
-    {
-      to: '/sales',
-      label: 'Sales History',
-      icon: Receipt,
-      badge: null,
-    },
-    {
-      to: '/inventory',
-      label: 'Products & Inventory',
-      icon: Package,
-      badge: null,
-    },
+    { to: '/',               label: t.navOverview,       icon: LayoutDashboard, badge: null },
+    { to: '/billing',        label: t.navBilling,        icon: ShoppingCart,    badge: 'POS' },
+    { to: '/sales',          label: t.navSales,          icon: Receipt,         badge: null },
+    { to: '/inventory',      label: t.navInventory,      icon: Package,         badge: null },
     {
       to: '/products/voice',
-      label: 'Voice Product Entry',
+      label: t.navVoiceProducts,
       icon: Mic,
-      badge: 'AI Batch',
+      badge: language === 'mr' ? 'व्हॉइस/मॅन्युअल' : 'Voice/Manual',
     },
   ];
 
   const content = (
     <div className="flex flex-col h-full bg-white border-r border-[#E2E8F0] select-none">
-      {/* Brand & Logo Header */}
-      <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between">
+
+      {/* ── Brand header ───────────────────────────────────────── */}
+      <div className="h-16 flex items-center justify-between px-5 border-b border-[#E2E8F0] flex-shrink-0">
         <NavLink
           to="/"
           onClick={onMobileClose}
-          className="flex items-center space-x-3 group"
+          className="flex items-center gap-3 group"
         >
           <img
             src={logoImg}
             alt="VoiceBill.AI Logo"
-            className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform"
+            className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform flex-shrink-0"
           />
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-extrabold text-lg text-[#102A56] tracking-tight">
-                VoiceBill<span className="text-[#1677F3]">.AI</span>
-              </span>
-            </div>
-            <p className="text-[11px] text-[#64748B] font-medium leading-none">
-              Smart Kirana POS
-            </p>
+          <div className="leading-tight">
+            <span className="block font-extrabold text-[15px] text-[#102A56] tracking-tight">
+              VoiceBill<span className="text-[#1677F3]">.AI</span>
+            </span>
+            <span className="block text-[11px] text-[#64748B] font-medium">
+              {language === 'mr' ? 'स्मार्ट किराणा POS' : 'Smart Kirana POS'}
+            </span>
           </div>
         </NavLink>
 
@@ -101,33 +75,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
           <button
             type="button"
             onClick={onMobileClose}
-            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex-shrink-0"
+            aria-label="Close navigation"
           >
             <X className="w-5 h-5" />
           </button>
         )}
       </div>
 
-      {/* Prominent Action: New Bill CTA */}
-      <div className="p-4 pb-2">
-        <button
-          type="button"
-          onClick={() => {
-            navigate('/billing');
-            if (onMobileClose) onMobileClose();
-          }}
-          className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-[#1677F3] hover:bg-[#0755D9] text-white font-bold text-sm shadow-md shadow-[#1677F3]/20 transition-all hover:shadow-lg hover:shadow-[#1677F3]/30 active:scale-[0.98]"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>+ Start New Bill</span>
-        </button>
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-        <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2">
-          Operations
-        </p>
+      {/* ── Nav links ──────────────────────────────────────────── */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.to;
@@ -137,26 +94,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
               key={item.to}
               to={item.to}
               onClick={onMobileClose}
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition group ${
                 isActive
-                  ? 'bg-[#EFF6FF] text-[#1677F3] font-bold shadow-sm'
-                  : 'text-[#102A56] hover:bg-[#F8FAFC] hover:text-[#1677F3]'
+                  ? 'bg-[#1677F3] text-white shadow-sm shadow-[#1677F3]/25'
+                  : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#102A56]'
               }`}
             >
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-3">
                 <Icon
-                  className={`w-4 h-4 ${
-                    isActive ? 'text-[#1677F3]' : 'text-[#64748B]'
+                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                    isActive ? 'text-white' : 'text-[#64748B] group-hover:text-[#1677F3]'
                   }`}
                 />
-                <span>{item.label}</span>
+                <span className="truncate">{item.label}</span>
               </div>
+
               {item.badge && (
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
                     isActive
-                      ? 'bg-[#1677F3] text-white'
-                      : 'bg-slate-100 text-[#64748B]'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#EFF6FF] text-[#1677F3] border border-[#BFDBFE]'
                   }`}
                 >
                   {item.badge}
@@ -167,57 +125,71 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
         })}
       </nav>
 
-      {/* Bottom Store & Device Controls */}
-      <div className="p-4 border-t border-[#E2E8F0] space-y-3 bg-[#F8FAFC]">
-        {/* Active Store Display */}
-        <div className="flex items-center space-x-2.5 px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] shadow-subtle">
-          <Store className="w-4 h-4 text-[#1677F3] flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-[#64748B] font-medium leading-none">Active Store</p>
-            <p className="text-xs font-bold text-[#102A56] truncate mt-0.5">
-              {storeName || 'Apna Kirana Store'}
-            </p>
+      {/* ── Footer controls ────────────────────────────────────── */}
+      <div className="px-4 py-4 border-t border-[#E2E8F0] space-y-2.5 bg-[#F8FAFC]/60 flex-shrink-0">
+
+        {/* Language switcher */}
+        <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0]">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#102A56]">
+            <Globe className="w-3.5 h-3.5 text-[#1677F3] flex-shrink-0" />
+            <span>{t.language}</span>
+          </div>
+          <div className="flex items-center rounded-lg bg-[#F8FAFC] border border-[#CBD5E1] p-0.5 gap-0.5 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2 py-0.5 rounded font-bold transition ${
+                language === 'en' ? 'bg-[#1677F3] text-white' : 'text-[#64748B] hover:text-[#102A56]'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('mr')}
+              className={`px-2 py-0.5 rounded font-bold transition ${
+                language === 'mr' ? 'bg-[#1677F3] text-white' : 'text-[#64748B] hover:text-[#102A56]'
+              }`}
+            >
+              मराठी
+            </button>
           </div>
         </div>
 
-        {/* Thermal Print Format Selector */}
+        {/* Receipt format */}
         <button
           type="button"
           onClick={handleCyclePaperWidth}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#BFDBFE] text-xs transition shadow-subtle"
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#BFDBFE] text-xs transition"
           title="Click to cycle receipt printer format"
         >
-          <div className="flex items-center space-x-2 text-[#102A56]">
-            <Printer className="w-3.5 h-3.5 text-[#1677F3]" />
-            <span className="font-semibold text-xs">Receipt Printer</span>
+          <div className="flex items-center gap-2 text-[#102A56]">
+            <Printer className="w-3.5 h-3.5 text-[#1677F3] flex-shrink-0" />
+            <span className="font-semibold">{t.receiptFormat}</span>
           </div>
           <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#EFF6FF] text-[#1677F3] border border-[#BFDBFE]">
             {paperWidth.toUpperCase()}
           </span>
         </button>
 
-        {/* User Profile & Logout */}
+        {/* User profile + logout */}
         {user && (
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center space-x-2.5 min-w-0">
+          <div className="flex items-center justify-between pt-0.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#1677F3] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                 {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-[#102A56] truncate leading-tight">
-                  {user.name}
-                </p>
-                <span className="text-[10px] font-semibold text-[#64748B] capitalize">
-                  {user.role}
-                </span>
+              <div className="min-w-0 leading-tight">
+                <p className="text-xs font-bold text-[#102A56] truncate">{user.name}</p>
+                <span className="text-[10px] font-semibold text-[#64748B] capitalize">{user.role}</span>
               </div>
             </div>
 
             <button
               type="button"
               onClick={logout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-              title="Sign Out"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition flex-shrink-0"
+              title={t.logout}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -229,16 +201,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
+      {/* Desktop persistent sidebar — exactly 256px wide */}
       <aside className="hidden md:flex flex-col w-64 flex-shrink-0 sticky top-0 h-screen z-30">
         {content}
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile drawer */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
             onClick={onMobileClose}
           />
           <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
@@ -249,3 +221,5 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
     </>
   );
 };
+
+export default Sidebar;

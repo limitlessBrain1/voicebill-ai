@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { UserResponse, getCurrentUser, loginUser } from '../services/api';
+import { Language, Translations, translations } from '../i18n/translations';
 
 export type ReceiptPaperWidth = '58mm' | '80mm' | 'a4';
 
@@ -17,12 +18,34 @@ interface AppContextType {
   setTokenDirectly: (token: string) => void;
   paperWidth: ReceiptPaperWidth;
   setPaperWidth: (width: ReceiptPaperWidth) => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: Translations;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [storeName, setStoreName] = useState<string>('Apna Kirana Store');
+  const [storeName, setStoreName] = useState<string>('');
+  
+  // Language State with persistence
+  const [language, setLanguageState] = useState<Language>(() => {
+    const saved = localStorage.getItem('voicebill_language');
+    return (saved === 'mr' || saved === 'en') ? saved : 'en';
+  });
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('voicebill_language', lang);
+    } catch (e) {
+      console.warn('Failed to save language preference:', e);
+    }
+  };
+
+  const t = translations[language];
+
+  // Paper width state
   const [paperWidth, setPaperWidthState] = useState<ReceiptPaperWidth>(() => {
     const saved = localStorage.getItem('voicebill_receipt_paper_width');
     return (saved === '58mm' || saved === '80mm' || saved === 'a4') ? saved : '58mm';
@@ -55,9 +78,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsLoadingAuth(true);
       const userData = await getCurrentUser();
       setUser(userData);
-      if (userData.name) {
-        setStoreName(`${userData.name}'s Kirana`);
-      }
+      setStoreName(userData.shop_name || '');
     } catch {
       setUser(null);
       setToken(null);
@@ -76,9 +97,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const res = await loginUser(email, password);
     setToken(res.access_token);
     setUser(res.user);
-    if (res.user.name) {
-      setStoreName(`${res.user.name}'s Kirana`);
-    }
+    setStoreName(res.user.shop_name || '');
   };
 
   const logout = () => {
@@ -114,6 +133,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setTokenDirectly,
         paperWidth,
         setPaperWidth,
+        language,
+        setLanguage,
+        t,
       }}
     >
       {children}
@@ -128,3 +150,5 @@ export const useApp = (): AppContextType => {
   }
   return context;
 };
+
+export default AppContext;

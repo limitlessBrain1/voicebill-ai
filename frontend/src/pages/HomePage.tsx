@@ -108,29 +108,22 @@ export const HomePage: React.FC = () => {
   // =============================================================
   if (isAuthenticated) {
     return (
-      <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="space-y-5 max-w-6xl mx-auto pb-2">
         {/* Top Operational Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-                Live Store Dashboard
-              </p>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#102A56] tracking-tight mt-1">
-              {storeName || 'Apna Kirana Store'}
-            </h1>
-            <p className="text-xs text-[#64748B] mt-0.5">
-              Welcome back, <strong className="text-[#102A56]">{user?.name}</strong>. Here is your operational summary for today.
-            </p>
+            {storeName && (
+              <h1 className="text-2xl font-extrabold text-[#102A56] tracking-tight">
+                {storeName}
+              </h1>
+            )}
           </div>
 
           <div className="flex items-center space-x-3">
             <button
               type="button"
               onClick={() => navigate('/billing')}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-[#1677F3] hover:bg-[#0755D9] text-white text-sm font-bold shadow-md shadow-[#1677F3]/25 transition active:scale-95"
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-[#1677F3] hover:bg-[#0755D9] text-white text-sm font-bold shadow-md shadow-[#1677F3]/25 transition active:scale-95"
             >
               <PlusCircle className="w-4 h-4" />
               <span>+ Start New Bill</span>
@@ -290,9 +283,9 @@ export const HomePage: React.FC = () => {
               <p className="text-[11px] text-[#64748B]">Click "+ Start New Bill" to begin serving customers.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-64 overflow-y-auto">
               <table className="w-full text-left text-xs">
-                <thead>
+                <thead className="sticky top-0">
                   <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-bold">
                     <th className="py-3 px-4">Receipt #</th>
                     <th className="py-3 px-4">Time</th>

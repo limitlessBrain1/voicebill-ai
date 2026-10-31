@@ -15,7 +15,21 @@ sys.path.insert(
 
 from app.core.config import settings
 from app.database.base import Base
-from app.models import Shop
+
+# Import ALL models so that their table definitions are registered in
+# Base.metadata before Alembic inspects it.  Missing imports here cause
+# autogenerate to miss tables and produce destructive "drop table" migrations.
+from app.models import (  # noqa: F401
+    Shop,
+    User,
+    Category,
+    Product,
+    BillingCart,
+    BillingCartItem,
+    Sale,
+    SaleItem,
+    Payment,
+)
 
 
 # Alembic Config object
@@ -27,15 +41,16 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-# Use the database URL from our application settings
+# Override the sqlalchemy.url from alembic.ini with the value from app settings.
+# This ensures Alembic always uses DATABASE_URL from the environment — the
+# placeholder in alembic.ini is never used at runtime.
 config.set_main_option(
     "sqlalchemy.url",
     settings.DATABASE_URL
 )
 
 
-# SQLAlchemy metadata
-# Alembic uses this to detect our models and generate migrations
+# SQLAlchemy metadata — Alembic uses this to detect models and generate migrations
 target_metadata = Base.metadata
 
 
@@ -66,8 +81,8 @@ def run_migrations_online() -> None:
     """
     Run migrations in online mode.
 
-    In online mode, Alembic connects directly
-    to PostgreSQL and applies the migration.
+    Uses NullPool so that Alembic's migration connection is never reused —
+    this is required when running against Neon PostgreSQL direct connections.
     """
 
     connectable = engine_from_config(

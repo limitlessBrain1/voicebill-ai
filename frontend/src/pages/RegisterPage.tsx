@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { UserPlus, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { UserPlus, Loader2, AlertCircle, CheckCircle2, ArrowLeft, Store } from 'lucide-react';
 import { useApp } from '../context';
-import { registerUser, loginUser, extractErrorMessage } from '../services/api';
+import { registerUser, extractErrorMessage } from '../services/api';
 import logoImg from '../assets/logo.png';
 
 export const RegisterPage: React.FC = () => {
@@ -10,6 +10,7 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [name, setName] = useState<string>('');
+  const [shopName, setShopName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -34,8 +35,7 @@ export const RegisterPage: React.FC = () => {
         email,
         phone,
         password,
-        shop_id: 1, // Default primary store
-        role: 'staff',
+        shop_name: shopName.trim(),
       });
 
       setSuccessMessage(`Account for ${res.name} created! Signing you in...`);
@@ -95,8 +95,30 @@ export const RegisterPage: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Store Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#102A56]">Your full name</label>
+              <label className="text-xs font-bold text-[#102A56]">
+                Store / Shop name <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <Store className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={shopName}
+                  onChange={(e) => setShopName(e.target.value)}
+                  required
+                  placeholder="e.g. Ramesh Kirana & General Store"
+                  className="w-full bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-[#102A56] placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#1677F3]/20 focus:border-[#1677F3] transition"
+                />
+              </div>
+              <p className="text-[11px] text-[#64748B]">This will appear as your store heading on the dashboard.</p>
+            </div>
+
+            {/* Owner Full Name */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#102A56]">
+                Your full name <span className="text-rose-500">*</span>
+              </label>
               <input
                 type="text"
                 value={name}
@@ -107,8 +129,11 @@ export const RegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#102A56]">Email address</label>
+              <label className="text-xs font-bold text-[#102A56]">
+                Email address <span className="text-rose-500">*</span>
+              </label>
               <input
                 type="email"
                 value={email}
@@ -119,8 +144,11 @@ export const RegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* Phone */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#102A56]">Phone number</label>
+              <label className="text-xs font-bold text-[#102A56]">
+                Phone number <span className="text-rose-500">*</span>
+              </label>
               <input
                 type="tel"
                 value={phone}
@@ -131,13 +159,17 @@ export const RegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#102A56]">Password</label>
+              <label className="text-xs font-bold text-[#102A56]">
+                Password <span className="text-rose-500">*</span>
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 placeholder="At least 6 characters"
                 className="w-full bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl px-3.5 py-2.5 text-xs text-[#102A56] placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#1677F3]/20 focus:border-[#1677F3] transition"
               />
