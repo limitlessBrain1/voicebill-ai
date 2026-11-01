@@ -37,6 +37,7 @@ venv.bak/
 .env.local
 .env.*.local
 !.env.example
+.env.production
 
 # Database
 *.sqlite3
