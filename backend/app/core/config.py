@@ -1,12 +1,11 @@
+import logging
 import os
-from typing import List, Union
-from pydantic import field_validator
+from typing import List, Optional, Union
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# Detect environment once at import time
-_ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development").lower()
-_IS_PRODUCTION: bool = _ENVIRONMENT == "production"
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -28,10 +27,12 @@ class Settings(BaseSettings):
     # Defaults to False in production to reduce attack surface.
     # Set ENABLE_DOCS=true in the Render environment variables to re-enable when
     # needed (e.g. during a debugging session), without touching any other setting.
-    ENABLE_DOCS: bool = not _IS_PRODUCTION
+    # None means "not explicitly set" — resolved automatically by environment.
+    ENABLE_DOCS: Optional[bool] = None
 
-    # Local PostgreSQL default — always overridden by DATABASE_URL env var in production.
+    # Database URL — MUST be overridden by the DATABASE_URL environment variable on Render.
     # Uses the psycopg 3 dialect (postgresql+psycopg); psycopg2 is no longer used.
+    # Local dev default is used only when DATABASE_URL is not set in the environment.
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/voicebill_db"
 
     BACKEND_CORS_ORIGINS: List[str] = [
@@ -39,23 +40,48 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
-    @field_validator("SECRET_KEY")
-    @classmethod
-    def secret_key_must_be_strong_in_production(cls, v: str) -> str:
-        """Reject a weak or default SECRET_KEY when running in production."""
-        if _IS_PRODUCTION:
-            weak_defaults = {
-                "dev-only-secret-key-change-in-production-not-safe-for-real-data",
-                "voicebill-ai-dev-secret-key-do-not-use-in-production",
-                "change-this-secret-key-in-production-use-a-strong-random-key",
-                "",
-            }
-            if v in weak_defaults or len(v) < 32:
-                raise ValueError(
-                    "SECRET_KEY must be set to a strong random value in production. "
-                    "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
-                )
-        return v
+    @model_validator(mode="after")
+    def _validate_production_settings(self) -> "Settings":
+        """
+        Production-safety checks that read the resolved ENVIRONMENT value
+        from this Settings instance — not from a stale module-level variable.
+
+        Runs after all fields are populated from env vars / .env / defaults,
+        so self.ENVIRONMENT is always the real runtime value.
+        """
+        is_production = self.ENVIRONMENT.lower() == "production"
+
+        # --- ENABLE_DOCS: resolve None to environment-aware default ---
+        if self.ENABLE_DOCS is None:
+            self.ENABLE_DOCS = not is_production
+
+        if not is_production:
+            return self
+
+        # --- SECRET_KEY: must be strong in production ---
+        weak_defaults = {
+            "dev-only-secret-key-change-in-production-not-safe-for-real-data",
+            "voicebill-ai-dev-secret-key-do-not-use-in-production",
+            "change-this-secret-key-in-production-use-a-strong-random-key",
+            "",
+        }
+        if self.SECRET_KEY in weak_defaults or len(self.SECRET_KEY) < 32:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong random value in production. "
+                'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
+            )
+
+        # --- DATABASE_URL: must not point to localhost in production ---
+        localhost_indicators = ("localhost", "127.0.0.1", "0.0.0.0")
+        if any(indicator in self.DATABASE_URL for indicator in localhost_indicators):
+            raise ValueError(
+                "DATABASE_URL is pointing to localhost in a production environment. "
+                "Set the DATABASE_URL environment variable on Render to your Neon "
+                "PostgreSQL connection string "
+                "(e.g. postgresql+psycopg://user:pass@ep-xxx.neon.tech/dbname?sslmode=require)."
+            )
+
+        return self
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod

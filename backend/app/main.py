@@ -1,3 +1,4 @@
+import logging
 import os
 
 from fastapi import FastAPI
@@ -6,8 +7,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api import api_router
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 # Determine runtime environment
 _IS_PRODUCTION: bool = os.getenv("ENVIRONMENT", "development").lower() == "production"
+
+# Emit safe startup diagnostics — never log passwords or full URLs
+logger.info("Starting VoiceBill AI — environment: %s", settings.ENVIRONMENT)
+logger.info("ENABLE_DOCS: %s", settings.ENABLE_DOCS)
+logger.info(
+    "DATABASE_URL configured: %s",
+    "yes (set via environment)" if os.getenv("DATABASE_URL") else "no (using code default)",
+)
 
 # Swagger UI, ReDoc and OpenAPI schema are controlled by the ENABLE_DOCS setting.
 #
